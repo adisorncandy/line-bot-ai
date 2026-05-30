@@ -46,13 +46,16 @@ export async function getProducts(): Promise<Product[]> {
     const json = await res.json();
     totalPage = json.totalPage ?? 1;
 
-    const items: Product[] = (json.data ?? [])
-      .filter((p: any) => p.isDisplay === true)
-      .map((p: any) => ({
+    type RawVariant = { options: { name: string; value: string }[]; price: number; discountedPrice: number };
+    type RawProduct = { id: number; name: string; isDisplay: boolean; category: { nameTh: string; nameEn: string }; variants: RawVariant[] };
+
+    const items: Product[] = (json.data as RawProduct[] ?? [])
+      .filter((p) => p.isDisplay === true)
+      .map((p) => ({
         id: p.id,
         name: p.name ?? "",
         category: p.category?.nameTh ?? p.category?.nameEn ?? "",
-        variants: (p.variants ?? []).map((v: any) => ({
+        variants: (p.variants ?? []).map((v) => ({
           options: v.options ?? [],
           price: v.price ?? 0,
           discountedPrice: v.discountedPrice ?? v.price ?? 0,
