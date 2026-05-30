@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateSignature, messagingApi } from "@line/bot-sdk";
 import type { webhook } from "@line/bot-sdk";
 import { getFAQ } from "@/lib/sheet";
+import { getProducts, formatProductsForPrompt } from "@/lib/myshop";
 import { askGemini, DEFAULT_REPLY_FAQ } from "@/lib/gemini";
 
 const client = new messagingApi.MessagingApiClient({
@@ -38,8 +39,12 @@ export async function POST(req: NextRequest) {
       let replyText = DEFAULT_REPLY_FAQ;
 
       try {
-        const faqCSV = await getFAQ();
-        replyText = await askGemini(faqCSV, userMessage);
+        const [faqCSV, products] = await Promise.all([
+          getFAQ(),
+          getProducts().catch(() => []),
+        ]);
+        const productsText = formatProductsForPrompt(products);
+        replyText = await askGemini(faqCSV, userMessage, productsText);
       } catch (err) {
         console.error("[Handler] Error:", err);
         replyText = DEFAULT_REPLY_FAQ;
