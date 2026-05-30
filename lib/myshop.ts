@@ -72,35 +72,39 @@ export async function getProducts(): Promise<Product[]> {
   return allProducts;
 }
 
+function shortName(name: string): string {
+  return name.length > 60 ? name.slice(0, 60) + "…" : name;
+}
+
+function formatPrice(v: ProductVariant): string {
+  return v.discountedPrice < v.price
+    ? `${v.discountedPrice} บาท (ลดจาก ${v.price} บาท)`
+    : `${v.price} บาท`;
+}
+
 export function formatProductsForPrompt(products: Product[]): string {
   if (products.length === 0) return "(ไม่พบข้อมูลสินค้า)";
 
   return products
     .map((p) => {
       const cat = p.category ? `[${p.category}] ` : "";
-      if (p.variants.length === 0) return `${cat}${p.name}`;
+      const name = shortName(p.name);
+      if (p.variants.length === 0) return `${cat}${name}`;
 
       const hasOnlyDefault = p.variants.length === 1 && p.variants[0].options.length === 0;
 
       if (hasOnlyDefault) {
-        const v = p.variants[0];
-        const price = v.discountedPrice < v.price
-          ? `${v.discountedPrice} บาท (ลดจาก ${v.price} บาท)`
-          : `${v.price} บาท`;
-        return `${cat}${p.name} — ราคา ${price}`;
+        return `${cat}${name} — ราคา ${formatPrice(p.variants[0])}`;
       }
 
       const variantLines = p.variants
         .map((v) => {
           const label = v.options.map((o) => o.value).join(", ");
-          const price = v.discountedPrice < v.price
-            ? `${v.discountedPrice} บาท (ลดจาก ${v.price} บาท)`
-            : `${v.price} บาท`;
-          return `  • ${label}: ${price}`;
+          return `  • ${label}: ${formatPrice(v)}`;
         })
         .join("\n");
 
-      return `${cat}${p.name}\n${variantLines}`;
+      return `${cat}${name}\n${variantLines}`;
     })
     .join("\n");
 }

@@ -59,7 +59,7 @@ export async function askGemini(
     contents: prompt,
     config: {
       temperature: 1.0,
-      maxOutputTokens: 1024,
+      maxOutputTokens: 4096,
     },
   });
 
